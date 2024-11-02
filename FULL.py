@@ -4,7 +4,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import StaleElementReferenceException  # Importing the exception
+from selenium.common.exceptions import StaleElementReferenceException
 import time
 
 # Set up Chrome options
@@ -39,14 +39,17 @@ driver.refresh()
 driver.get("https://civitai.com/images")
 
 # Define the button emojis to click
-button_emojis_to_click = ["👍", "❤️", "😂", "😢"]
+button_emojis_to_click = ["👍"]
+
+# Set to track clicked buttons
+clicked_buttons = set()
 
 # Function to click a button using JavaScript
 def click_button(button):
     driver.execute_script("arguments[0].click();", button)
 
 # Function to scroll down a little
-def scroll_down(pixels=300):
+def scroll_down(pixels=100):
     driver.execute_script(f"window.scrollBy(0, {pixels});")  # Scroll down by specified pixels
     time.sleep(0.1)  # Add a short delay to allow scrolling to settle
 
@@ -62,8 +65,11 @@ try:
                 button_text_elements = button.find_elements(By.CLASS_NAME, "mantine-Text-root")
                 button_texts = [text_elem.text for text_elem in button_text_elements]
 
+                # Create a unique identifier for the button (can use a combination of text and element reference)
+                button_id = button.get_attribute("outerHTML")  # Use outer HTML as a unique identifier
+
                 # Check if any of the button texts match the specified emojis
-                if any(text in button_texts for text in button_emojis_to_click):
+                if any(text in button_texts for text in button_emojis_to_click) and button_id not in clicked_buttons:
                     # Wait until the button is clickable
                     WebDriverWait(driver, 5).until(EC.element_to_be_clickable(button))
 
@@ -72,6 +78,9 @@ try:
 
                     click_button(button)  # Use JavaScript click method
                     print(f"Button clicked: {button_texts}")
+
+                    # Mark this button as clicked using its outer HTML as identifier
+                    clicked_buttons.add(button_id)
 
                     # Scroll down a little after each click
                     scroll_down()
@@ -87,3 +96,4 @@ except KeyboardInterrupt:
 
 finally:
     driver.quit()  # Close the browser after stopping the script
+
